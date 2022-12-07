@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.shop.mapper.AdminMapper">
+
+  	<!-- 상품 등록 -->
+  	<insert id="itemEnroll">
+  	
+  		<selectKey resultType="int" keyProperty="itemId" order="AFTER">
+  		
+  			SELECT LAST_INSERT_ID()
+  		
+  		</selectKey>		
+  	
+  		insert into shop_item(itemName, brandId, cryear, creater, cateCode, itemPrice, itemStock, itemDiscount, itemIntro, itemContents)
+		values(#{itemName},#{brandId}, #{cryear},#{creater},#{cateCode},#{itemPrice},#{itemStock},#{itemDiscount},#{itemIntro},#{itemContents})
+
+  	</insert>
+
+  	<!-- 카테고리 리스트 -->
+  	<select id="cateList" resultType="com.shop.model.CateVO">
+  	
+  		select * from shop_cate order by catecode
+  	
+  	</select>
+  	
+	<!-- 상품 리스트 -->
+	<select id="goodsGetList" resultType="com.shop.model.ItemVO">
+	
+		select  itemId, itemName,  b.brandName, c.cateName, itemStock, a.regDate
+		from shop_item a 
+		left outer join shop_brand b on a.brandId = b.brandId
+		left outer join shop_cate c on a.cateCode = c.cateCode
+		<if test="keyword != null">
+			where (itemName like concat ('%', #{keyword}, '%'))
+		</if>
+		order by itemId desc 
+		limit #{skip}, #{amount}		
+	
+	</select>
+  	
+  	<!-- 상품 총 갯수 -->
+  	<select id="goodsGetTotal" resultType="int">
+  	
+  		select count(*) from shop_item
+  		
+  		<if test="keyword != null">
+  		
+  			where itemName like concat('%' , #{keyword}, '%')
+  		
+  		</if>
+  	
+  	</select>
+  	
+ 	<!-- 상품 조회 페이지 -->
+	<select id="goodsGetDetail" resultType="com.shop.model.ItemVO">
+	
+		select itemId, itemName, (select brandName from shop_brand where brandId =shop_item.brandId) brandName, 
+			brandId, cryear, creater, cateCode, itemPrice, itemStock, itemDiscount, itemIntro, itemContents, regDate, updateDate 
+		from shop_item where itemId = #{itemId}
+	
+	</select> 	
+
+	<!-- 상품 정보 수정 -->
+	<update id="goodsModify">
+		
+		update shop_item set itemName = #{itemName}, brandId = #{brandId}, cryear = #{cryear}, creater = #{creater}, cateCode = ${cateCode}, 
+		itemPrice = #{itemPrice}, itemStock = #{itemStock}, itemDiscount = #{itemDiscount}, itemIntro = #{itemIntro}, itemContents = #{itemContents}, updateDate = now()
+		where itemId = ${itemId}
+		
+	</update>
+	
+	<!-- 상품 정보 삭제 -->
+	<delete id="goodsDelete">
+	
+		delete from shop_item where itemId = #{itemId}
+	
+	</delete>	
+	
+	<!-- 이미지 등록 -->
+	<insert id="imageEnroll">
+	
+		insert into shop_image(itemId, fileName, uploadPath, uuid) values (#{itemId}, #{fileName}, #{uploadPath}, #{uuid})
+	
+	</insert>	
+	
+	<!-- 지정 상품 이미지 전체 삭제 --> 
+	<delete id="deleteImageAll">
+	
+		delete FROM shop_image where itemId = #{itemId}
+	
+	</delete>	
+	
+	<!-- 어제자 날자 이미지 리스트 -->
+	<select id="checkFileList" resultType="com.shop.model.AttachImageVO">
+	
+		select * from shop_image where uploadpath = DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -1 DAY), '%Y\%m\%d')	
+	
+	</select>	
+	
+	<!-- 지정 상품 이미지 정보 얻기 -->
+	<select id="getAttachInfo" resultType="com.shop.model.AttachImageVO">
+	
+		select * from shop_image where itemId = #{itemId}
+	
+	</select>		
+	
+	<!-- 주문 리스트 -->
+	<select id="getOrderList" resultType="com.shop.model.OrderDTO">	
+			
+			select orderId, memberId, orderstate, orderdate
+		    from shop_order 
+		    <if test="keyword != null">
+		    	where memberId like concat('%',#{keyword}, '%')
+		    </if>
+		    order by orderdate desc
+		    limit #{skip}, #{amount}
+		    
+	</select>	
+	
+	<!-- 상품 총 개수 -->
+	<select id="getOrderTotal" resultType="int">
+	
+		select count(*) from shop_order
+		
+	    <if test="keyword != null">
+	    	where memberId like concat('%',#{keyword}, '%')
+	    </if>
+	
+	</select>	
+
+  </mapper>

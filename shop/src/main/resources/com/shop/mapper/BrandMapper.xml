@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.shop.mapper.BrandMapper">
+  
+    <!-- 브랜드 등록 -->
+  	<insert id="brandEnroll">
+  	
+  		insert into shop_brand(brandName, nationId, brandIntro) values(#{brandName}, #{nationId}, #{brandIntro} )
+
+  	</insert>	
+  	
+  	
+	<!-- 브랜드 목록 -->
+	<select id="brandGetList" resultType="com.shop.model.BrandVO">
+	
+		select  brandId, brandName, nationId, regDate, updateDate
+		from shop_brand 
+		<if test="keyword != null">
+			where brandName like concat('%',#{keyword}, '%')
+		</if>
+		order by brandId desc 
+		limit #{skip}, #{amount}	
+	
+	</select>
+  	
+  	<!-- 브랜드 수 -->
+  	<select id="brandGetTotal" resultType="int">
+  	
+  		select count(*) from shop_brand
+  		
+  		<if test="keyword != null">
+  		
+  			where brandName like concat('%', #{keyword}, '%');
+  		
+  		</if>
+  		
+  	</select>
+  	
+  	<!-- 브랜드 디테일 페이지 -->
+  	<select id="brandGetDetail" resultType="com.shop.model.BrandVO">
+  	
+  		select * from shop_brand where brandId = #{brandId}
+  	
+  	</select>  	
+  	
+	<!-- 브랜드 내용 수정 -->
+	<update id="brandModify">
+	
+		update shop_brand set brandName=#{brandName}, nationId=#{nationId}, brandIntro=#{brandIntro}, updateDate=now() where brandId = #{brandId}
+	
+	</update>  	
+  
+    	<!-- 브랜드 정보 삭제 -->
+  	<delete id="brandDelete">
+  	
+  		delete from shop_brand where brandId = #{brandId}
+  	
+  	</delete>
+  	
+  	
+  </mapper>

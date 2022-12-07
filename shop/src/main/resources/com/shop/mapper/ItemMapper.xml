@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.shop.mapper.ItemMapper">
+
+	<!-- criteria(검색조건) -->
+	<sql id="criteria">
+
+	  	<trim prefix="where (" suffix=")" prefixOverrides="AND">
+	  		<foreach item="type" collection="typeArr">
+	  			<trim prefix="AND">
+	  				<choose>
+	  					<when test="type == 'A'.toString()">
+	  						<trim prefixOverrides="or">
+			  					<foreach collection="brandArr" item="brandId">
+			  						<trim prefix="or">
+			  							a.brandId = #{brandId}
+			  						</trim>
+			  					</foreach>  						
+	  						</trim>
+	  					</when>
+	  					<when test="type == 'C'.toString()">
+	  						a.cateCode like concat ('%', #{cateCode}, '%')
+	  					</when>  					
+	  					<when test="type == 'T'.toString()">
+	  						itemName like concat ('%', #{keyword}, '%')
+	  					</when>  					
+	  				</choose>
+	  			</trim>
+	  		</foreach>
+	  	</trim>
+	
+	</sql>
+	
+	<!-- 상품 검색 -->
+	<select id="getGoodsList" resultType="com.shop.model.ItemVO">
+	
+			select  itemId, itemName, b.brandName, a.brandId, c.cateName, a.cateCode, creater, cryear, itemPrice, itemDiscount
+			from shop_item a left outer join shop_brand b on a.brandId = b.brandId
+			left outer join shop_cate c on a.cateCode = c.cateCode
+			<include refid="criteria"></include>
+			order by itemId desc 
+			limit #{skip}, #{amount}	
+	
+	</select>
+	
+	<!-- 상품 총 개수 -->
+	<select id="goodsGetTotal" resultType="int">
+
+  		select count(*) from shop_item a
+  		
+		<include refid="criteria"></include>
+		
+	</select>
+	
+	<!-- 브랜드 id 리스트 요청 -->
+	<select id="getBrandIdList" resultType="String">
+	
+		select brandId from shop_brand where brandName like concat ('%', #{keyword}, '%')
+	
+	</select>		
+	
+	<!-- 국내 카테고리 리스트 -->
+	<select id="getCateCode1" resultType="com.shop.model.CateVO">
+	
+		<![CDATA[
+			select * from shop_cate where cateCode > 100000 and cateCode < 200000
+		]]>
+	</select>
+	
+	<!-- 외국 카테고리 리스트 -->
+	<select id="getCateCode2" resultType="com.shop.model.CateVO">
+	
+		<![CDATA[
+			select * from shop_cate where cateCode > 200000 and cateCode < 300000
+		]]>
+	
+	</select>	
+	
+	<!-- 검색 대상 카테고리 리스트 -->	
+	<select id="getCateList" resultType="String">
+	
+		select distinct cateCode from shop_item where 
+		<foreach item="type" collection="typeArr">		
+  				<choose>
+  					<when test="type == 'A'.toString()">
+  						<trim prefixOverrides="or">
+		  					<foreach collection="brandArr" item="brandId">
+		  						<trim prefix="or">
+		  							brandId = #{brandId}
+		  						</trim>
+		  					</foreach>  						
+  						</trim>
+  					</when>
+  					<when test="type == 'T'.toString()">
+  						itemName like concat ('%', #{keyword}, '%')
+  					</when>  					
+  				</choose>
+  		</foreach>
+	
+	</select>	
+	
+	
+	<!-- 카테고리 정보(+검색대상 갯수) -->		
+	<select id="getCateInfo" resultType="com.shop.model.CateFilterDTO">
+	
+		select DISTINCT count(*) cateCount, a.cateCode,b.cateName from shop_item a left join shop_cate b on a.cateCode = b.cateCode 
+		
+		where 
+
+		<foreach item="type" collection="typeArr">		
+  				<choose>
+  					<when test="type == 'A'.toString()">
+  					
+  						<trim prefix="(" suffix=")" prefixOverrides="or">
+  						
+		  					<foreach collection="brandArr" item="brandId">
+		  					
+		  						<trim prefix="or">
+		  						
+		  							brandId = #{brandId}
+		  							
+		  						</trim>
+		  						
+		  					</foreach>
+		  					  						
+  						</trim>
+  						
+  						and a.cateCode = #{cateCode}
+  						
+  					</when>
+  					
+  					<when test="type == 'T'.toString()">
+  					
+  						itemName like concat ('%', #{keyword}, '%') and a.cateCode = #{cateCode}
+  						 
+  					</when>
+  					  					
+  				</choose>
+  		</foreach>
+	
+	</select>	
+	
+	<!-- 상품 정보 -->
+	<select id="getGoodsInfo" resultType="com.shop.model.ItemVO">
+	
+			select a.ITEMID, a.ITEMNAME, a.BRANDID, b.BRANDNAME, a.CRYEAR, a.CREATER, a.CATECODE, c.CATENAME, a.ITEMPRICE, a.ITEMSTOCK, a.ITEMDISCOUNT, a.ITEMINTRO, a.ITEMCONTENTS
+			from shop_item a left outer join shop_brand b on a.brandId = b.brandId
+			left outer join shop_cate c on a.catecode = c.catecode
+			where itemId = ${itemId}	
+	
+	</select>	
+	
+	<select id="getItemIdName" resultType="com.shop.model.ItemVO">
+	
+		select itemId, itemName from shop_item 
+		where itemId = #{itemId}
+	
+	
+	</select>	
+	
+	<select id="likeSelect" resultType="com.shop.model.SelectDTO">
+	
+	select itemId, itemName, ratingAvg, (select cateName from shop_cate where shop_item.cateCode = shop_cate.cateCode) as cateName
+	from shop_item
+	order by ratingAvg desc limit 8		
+	
+	</select>	
+					
+	
+  </mapper>
